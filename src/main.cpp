@@ -3,8 +3,8 @@
 
 This example is for communicating with the PN532 chip using I2C. Wiring 
 should be as follows:
-  PN532 SDA -> EFM32 D22 Pin (with 4.7K resistor already present)
-  PN532 SCL -> EFM32 D21 Pin(with 4.7K resistor already present)
+  PN532 SDA -> EFM32 D21 Pin (with 4.7K resistor already present)
+  PN532 SCL -> EFM32 D22 Pin(with 4.7K resistor already present)
   PN532 IRQ -> EFM32 D4 Pin
   PN32 RST0 -> EFM32 D5 Pin
   PN532 3.3v -> 3.3v
@@ -18,9 +18,11 @@ Based on readMifareClassicIrq.pde by Adafruit
 #include <SPI.h>
 #include <Adafruit_PN532.h>
 #include <bits/stdc++.h>
+#include <vector>
+#include <algorithm>
 
 static void startListeningToNFC();
-static void handleCardDetected();
+static String handleCardDetected();
 
 // Pins used for I2C IRQ
 #define PN532_IRQ 4
@@ -32,14 +34,13 @@ boolean readerDisabled = false;
 int irqCurr;
 int irqPrev;
 
-// valid_tags =
-// 0x02 0x82 0x00 0x08 0x7B 0x2B 0xC3
-// 0x04 0x9C 0x49 0x6A 0x99 0x5B 0x80
-// 0x69 0x42 0xA2 0xB8
-// 0xB3 0xF7 0xC6 0x02
-// 0x04 0x6B 0x0F 0xE2 0x50 0x5A 0x80
-// 0xA9 0xAF 0xAE 0xC2
-// 0x04 0x07 0xCC 0x52 0xA8 0x58 0x81
+const int aantalGebruikers = 4;
+int gebruikersTeller = 0;
+bool registeringCards = true;
+//uint32_t idGebruikers[aantalGebruikers];
+std::vector<String> idGebruikers;
+void registerCard(String id);
+String hexToString(uint8_t *cardid);
 
 // This example uses the IRQ line, which is available when in I2C mode.
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
@@ -48,8 +49,8 @@ void setup(void)
 {
   Serial.begin(115200); //Adapt the platformio.ini with correct monitor_speed
 
+  ///nfc setup
   Serial.println("Begin NFC532 Scanning Software.");
-
   nfc.begin();
 
   uint32_t versiondata = nfc.getFirmwareVersion();
@@ -91,9 +92,12 @@ void loop(void)
     if (irqCurr == LOW && irqPrev == HIGH)
     {
       //Serial.println("Got NFC IRQ");
-      handleCardDetected();
+      String id = handleCardDetected();
+      if (registeringCards)
+      {
+        registerCard(id);
+      }
     }
-
     irqPrev = irqCurr;
   }
 }
@@ -106,6 +110,7 @@ void startListeningToNFC()
   Serial.println("Present an ISO14443A Card ...");
   nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
 }
+
 boolean validate(uint8_t *cardid, uint8_t length)
 {
   std::stringstream ss;
@@ -151,7 +156,33 @@ boolean validate(uint8_t *cardid, uint8_t length)
   return false;
 }
 
-void handleCardDetected()
+String hexToString(uint8_t *cardid)
+{
+  int length = sizeof(cardid);
+  std::stringstream ss;
+  for (int i = 0; i < length - 1; ++i)
+  {
+    ss << "0x";
+    if ((int)cardid[i] <= 15)
+    {
+      ss << "0";
+    }
+    ss << std::hex << (int)cardid[i];
+    ss << " ";
+  }
+  ss << "0x";
+  if ((int)cardid[length - 1] <= 15)
+  {
+    ss << "0";
+  }
+  ss << std::hex << (int)cardid[length - 1];
+  std::string mystrC = ss.str();
+  String mystr = mystrC.c_str();
+  mystr.toUpperCase();
+  return mystr;
+}
+
+String handleCardDetected()
 {
   uint8_t success = false;
   uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0}; // Buffer to store the returned UID
@@ -167,10 +198,10 @@ void handleCardDetected()
     //Serial.println("Found an ISO14443A card");
     //Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
     //Serial.print("  UID Value: ");
-    Serial.print("Card ID HEX Value: ");
-    nfc.PrintHex(uid, uidLength);
+    //Serial.print("Card ID HEX Value: ");
+    //nfc.PrintHex(uid, uidLength);
 
-    if (uidLength == 4)
+    /*if (uidLength == 4)
     {
       // We probably have a Mifare Classic card ...
       uint32_t cardid = uid[0];
@@ -187,17 +218,35 @@ void handleCardDetected()
       {
         Serial.print(uid[i]);
       }
-    }
-    Serial.println("");
-
-    if (validate(uid, uidLength))
-    {
-      Serial.println("xxxxxxxxxxxxxxxxxxGeldige tag!xxxxxxxxxxxxxxxxx");
-    }
-
+    }*/
     timeLastCardRead = millis();
   }
 
   // The reader will be enabled again after DELAY_BETWEEN_CARDS ms will pass.
   readerDisabled = true;
+  return hexToString(uid);
+}
+
+void registerCard(String id)
+{
+  if (gebruikersTeller < aantalGebruikers)
+  {
+    if (std::count(idGebruikers.begin(), idGebruikers.end(), id))
+    {
+      Serial.println("Tag reeds geregistreerd");
+    }
+    else
+    {
+      idGebruikers.push_back(id);
+      gebruikersTeller++;
+    }
+  }
+  else
+  {
+    Serial.println("Maximaal aantal gebruiker bereikt: ");
+    for (const String i : idGebruikers)
+    {
+      Serial.println(i);
+    }
+  }
 }
