@@ -1,37 +1,9 @@
-## Welcome to GitHub Pages
+# NFC-test
 
-You can use the [editor on GitHub](https://github.com/Ontsmettinator3000/NFC-testing/edit/main/docs/index.md) to maintain and preview the content for your website in Markdown files.
+In deze repo testen we de mogelijkheden van de nfc lezer.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Functies
 
-### Markdown
+### hexToString
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Ontsmettinator3000/NFC-testing/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+Deze methode zal de data array van uint_8t omzetten in een string. Op deze manier is het makkelijk om de waarden van de uitgelezen tags op te slaan en te vergelijken.
