@@ -158,7 +158,7 @@ boolean validate(uint8_t *cardid, uint8_t length)
 
 String hexToString(uint8_t *cardid)
 {
-  int length = sizeof(cardid);
+  int length = 7;
   std::stringstream ss;
   for (int i = 0; i < length - 1; ++i)
   {
